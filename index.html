@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hermes на своём сервере — шпаргалка</title>
+<meta name="description" content="Шпаргалка: поднимаем Hermes Agent на своём Ubuntu-сервере. Все команды с кнопкой копирования.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f2efe6">
+<meta name="apple-mobile-web-app-title" content="Hermes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="goo" aria-hidden="true">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix"
+          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="goo"/>
+        <feBlend in="SourceGraphic" in2="goo"/>
+      </filter>
+    </defs>
+    <g filter="url(#goo)">
+      <circle class="b1" cx="18" cy="22" r="12"/>
+      <circle class="b2" cx="46" cy="38" r="10"/>
+      <circle class="b3" cx="74" cy="20" r="13"/>
+      <circle class="b4" cx="86" cy="52" r="9"/>
+      <circle class="b5" cx="40" cy="70" r="12"/>
+      <circle class="b6" cx="14" cy="62" r="8"/>
+    </g>
+  </svg>
+</div>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#top">
+      <span class="diamond" aria-hidden="true"></span>
+      <span class="mono">HERMES / SHORTCUT</span>
+    </a>
+    <nav class="topnav mono">
+      <a href="#top">Шпаргалка</a>
+      <a href="#all">Все команды</a>
+      <a href="#telegram">Telegram</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero wrap">
+   <div class="hero-left">
+    <p class="mono kicker">UBUNTU 24.04 LTS · HERMES AGENT V0.22.5 · 1 VCPU / 2 GB RAM</p>
+    <h1 class="display">
+      <span class="line">HERMES</span>
+      <span class="line accent">НА СВОЁМ</span>
+      <span class="line outline">СЕРВЕРЕ</span>
+    </h1>
+    <p class="lead">
+      Пошаговая шпаргалка: подготовка машины, установка агента, подключение
+      провайдера и модели, Telegram-шлюз. Нажми иконку справа от команды — она скопируется.
+    </p>
+   </div>
+
+   <div class="promo">
+      <a class="tile promo-cvc" href="https://cheapvibecode.ru/ref/ED2WD9FM6Z" target="_blank" rel="noopener">
+        <span class="tile-top mono">API / ПРОВАЙДЕР</span>
+        <img src="assets/cvc.png" alt="CheapVibeCode">
+        <span class="tile-title">CheapVibeCode</span>
+        <span class="tile-sub mono">OPENAI-СОВМЕСТИМЫЙ ENDPOINT</span>
+        <span class="tile-go mono" aria-hidden="true">ОТКРЫТЬ ↗</span>
+      </a>
+
+      <a class="tile promo-aeza" href="https://aeza.net/?ref=948702" target="_blank" rel="noopener">
+        <span class="tile-top mono">СЕРВЕР / АРЕНДА</span>
+        <img src="assets/aeza.png" alt="Aéza">
+        <span class="tile-title">Aéza</span>
+        <span class="tile-sub mono">VPS · NVME · DDoS</span>
+        <span class="tile-go mono" aria-hidden="true">ОТКРЫТЬ ↗</span>
+      </a>
+
+      <a class="tile promo-tg" href="https://t.me/sorrybutikillyou" target="_blank" rel="noopener">
+        <span class="tile-top mono">ПОДДЕРЖКА</span>
+        <img src="assets/tg.png" alt="Telegram">
+        <span class="tile-title">Задать вопрос</span>
+        <span class="tile-sub mono">TELEGRAM · @SORRYBUTIKILLYOU</span>
+        <span class="tile-go mono" aria-hidden="true">НАПИСАТЬ ↗</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section class="wrap">
+    <div class="tabs-wrap">
+      <div class="tabs" role="tablist" aria-label="Разделы инструкции">
+        <button class="tab is-active" role="tab" aria-selected="true" data-tab="prep">01 Подготовка</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="install">02 Установка</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="provider">03 Провайдер</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="telegram">04 Telegram</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="all">Все команды</button>
+      </div>
+    </div>
+
+    <!-- 01 ПОДГОТОВКА -->
+    <article class="panel is-active" id="prep" data-panel="prep">
+      <div class="panel-head">
+        <h2 class="mono">01 / ПОДГОТОВКА СЕРВЕРА</h2>
+        <p class="panel-intro">Сервер из аренды приходит «голым»: без обновлений, без утилит, с дефолтным SSH на 22-м порту и без защиты от перебора паролей. Сначала приводим машину в порядок.</p>
+      </div>
+
+      <div class="cols">
+        <div class="col-main">
+          <details class="acc" open>
+            <summary><span class="mono num">1.1</span> Первый скрипт: swap, пользователь, заготовка конфига</summary>
+            <div class="acc-body">
+              <div class="cmd" data-copy><code>wget -O /tmp/prepare-hermes.sh https://amorev.ru/misc/hermes/prepare-hermes-1.sh && sudo bash /tmp/prepare-hermes.sh</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+              <ul class="list">
+                <li>Создаёт <code>/swapfile</code> на 2 ГБ (<code>fallocate → chmod 600 → mkswap → swapon</code>) и добавляет его в <code>/etc/fstab</code>.</li>
+                <li>Ставит <code>vm.swappiness = 80</code> — системе реже сбрасывать страницы в RAM.</li>
+                <li>Дважды спрашивает пароль (ввод скрыт) и сохраняет его хеш SHA-512 (<code>openssl passwd -6</code>) в <code>/root/setup-data/password.hash</code> с правами 600. Сам пароль нигде не остаётся.</li>
+                <li>Создаёт <code>/root/setup-data/env.txt</code> с шаблоном.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary><span class="mono num">1.2</span> Заполняем env.txt вручную</summary>
+            <div class="acc-body">
+              <div class="cmd" data-copy><code>sudo nano /root/setup-data/env.txt</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+              <table class="tbl">
+                <thead><tr><th>Параметр</th><th>Что вписать</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="chip">TG_BOT_TOKEN</span></td><td>Токен бота от @BotFather</td></tr>
+                  <tr><td><span class="chip">TG_CHAT_ID</span></td><td>ID чата (узнать через @userinfobot)</td></tr>
+                  <tr><td><span class="chip">NEW_USERNAME</span></td><td>Имя будущего пользователя, по умолчанию <code>hermes</code></td></tr>
+                  <tr><td><span class="chip">SSH_PORT</span></td><td>Новый SSH-порт, по умолчанию <code>2091</code></td></tr>
+                </tbody>
+              </table>
+              <p class="note">Сохраняем через <code>Ctrl+O</code> → Enter, выходим через <code>Ctrl+X</code>. Переменных для модели (endpoint, API-ключ) в <code>env.txt</code> нет — они задаются позже, при настройке агента. <code>SERVER_IP</code> в шаблоне отсутствует, но второй скрипт допишет его сам (через icanhazip.com с откатом на ifconfig.me и локальный <code>hostname -I</code>).</p>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary><span class="mono num">1.3</span> Второй скрипт: пользователь, SSH, UFW, fail2ban, уведомления</summary>
+            <div class="acc-body">
+              <div class="cmd" data-copy><code>wget -O /tmp/prepare-hermes2.sh https://amorev.ru/misc/hermes/prepare-hermes-2.sh && sudo bash /tmp/prepare-hermes2.sh</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+              <ul class="list">
+                <li>Ставит пакеты: <code>sudo ufw fail2ban curl ca-certificates openssh-server libpam-modules logrotate</code>.</li>
+                <li>Создаёт пользователя <code>hermes</code> (<code>useradd -m -s /bin/bash</code>) и ставит пароль из хеша (<code>chpasswd -e</code>).</li>
+                <li>Даёт <code>sudo</code> без пароля: <code>/etc/sudoers.d/hermes</code> со строкой <code>hermes ALL=(ALL:ALL) NOPASSWD:ALL</code>, проверка — <code>visudo -cf</code>. Учтите: компрометация учётки даёт полный root.</li>
+                <li>Создаёт <code>/home/hermes/.ssh</code> с правами 700.</li>
+                <li>Правит <code>/etc/ssh/sshd_config</code> (с бэкапом): <code>Port 2091</code>, <code>PermitRootLogin no</code>, <code>PasswordAuthentication yes</code>, <code>PubkeyAuthentication yes</code>, <code>ChallengeResponseAuthentication no</code>, <code>UsePAM yes</code>. Валидация через <code>sshd -t</code>, потом рестарт.</li>
+                <li>UFW: <code>ufw --force reset</code>, политика <code>deny incoming</code> / <code>allow outgoing</code>, открыт только порт 2091/tcp.</li>
+                <li>fail2ban в <code>/etc/fail2ban/jail.local</code>: бан на час при 5 неудачных попытках за 10 минут, backend systemd, действие — бан через UFW, jail <code>sshd</code> на порту 2091.</li>
+                <li>Telegram-уведомления о входах: хук <code>/usr/local/libexec/ssh-login-telegram.sh</code> (права 700) + строка в <code>/etc/pam.d/sshd</code>. Логи — <code>/var/log/hermes-ssh-login-telegram.log</code> (600), ротация logrotate 14 дней.</li>
+                <li>Копирует <code>env.txt</code> в <code>/home/hermes/env.txt</code>, чтобы пользователь <code>hermes</code> мог прочитать конфиг без root.</li>
+                <li>Перезапускает SSH и печатает новый порт, пользователя, IP.</li>
+              </ul>
+              <div class="callout callout-warn">
+                <span class="mono callout-tag">ВАЖНО</span>
+                <p>Не закрывай текущую SSH-сессию, пока не убедился, что вход с новым портом работает. Если конфиг <code>sshd</code> окажется невалидным, единственный способ вернуть доступ — консоль провайдера.</p>
+              </div>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary><span class="mono num">1.4</span> Проверяем вход под hermes</summary>
+            <div class="acc-body">
+              <p>Открываем новый терминал (старый держим открытым) и подключаемся:</p>
+              <div class="cmd" data-copy><code>ssh hermes@<ВАШ_IP_СЕРВЕРА> -p 2091</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+              <div class="cmd" data-copy><code>whoami                     # должно быть hermes
+sudo -v                      # должно пройти без запроса пароля
+swapon --show                # должен быть виден /swapfile
+sudo ufw status verbose
+sudo fail2ban-client status sshd</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+              <p class="note">В <code>ufw status</code> должен быть открыт только порт 2091, а в списке jail fail2ban — <code>Currently failed</code> / <code>Currently banned</code> в нуле.</p>
+            </div>
+          </details>
+        </div>
+
+        <aside class="col-side">
+          <div class="box">
+            <h3 class="mono box-title">ЧТО ПОНАДОБИТСЯ</h3>
+            <ul class="list tight">
+              <li>Сервер на <b>Ubuntu 24.04 LTS</b> — долгая поддержка, стабильные репозитории.</li>
+              <li>Root-доступ или пользователь с правами <code>sudo</code>.</li>
+              <li><b>1 vCPU</b> и <b>2 ГБ RAM</b> для базовой установки; 4 ГБ — под фоновые задачи с тяжёлыми моделями.</li>
+              <li>Стабильный интернет и токен API: OpenAI-совместимый провайдер, Anthropic или локальный endpoint.</li>
+              <li>Базовое понимание <code>cron</code> и <code>systemd</code>.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </article>
+
+    <!-- 02 УСТАНОВКА -->
+    <article class="panel" id="install" data-panel="install">
+      <div class="panel-head">
+        <h2 class="mono">02 / УСТАНОВКА HERMES</h2>
+        <p class="panel-intro">Уже под пользователем <code>hermes</code> и без <code>sudo</code>. Установщик сразу предложит выбрать сценарий настройки — вручную конфиги править не придётся.</p>
+      </div>
+      <div class="cmd" data-copy><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+      <div class="cards-3">
+        <div class="mini">
+          <span class="mono mini-tag">СЦЕНАРИЙ A</span>
+          <h4>Quick Setup</h4>
+          <p>Вход через OAuth в портал Nous, без API-ключей. Модель и инструменты подставляются автоматически. Самый быстрый способ начать.</p>
+        </div>
+        <div class="mini">
+          <span class="mono mini-tag">СЦЕНАРИЙ B</span>
+          <h4>Full setup</h4>
+          <p>Полный ручной режим: вы сами задаёте провайдера, ключи, модель, инструменты и опции. Нужен, когда свой endpoint или API-ключ.</p>
+        </div>
+        <div class="mini">
+          <span class="mono mini-tag">СЦЕНАРИЙ C</span>
+          <h4>Blank Slate</h4>
+          <p>Почти всё выключено, каждую возможность включаете вручную. Вариант для параноиков и тонкой настройки.</p>
+        </div>
+      </div>
+      <p class="note">Выбираем <b>Quick Setup</b> — стрелками вниз/вверх до нужного пункта и Enter.</p>
+    </article>
+
+    <!-- 03 ПРОВАЙДЕР -->
+    <article class="panel" id="provider" data-panel="provider">
+      <div class="panel-head">
+        <h2 class="mono">03 / ПРОВАЙДЕР И МОДЕЛЬ</h2>
+        <p class="panel-intro">На экране баннер версии, список инструментов и навыков, и главное — агент говорит, что inference-провайдер ещё не настроен. Соглашаемся: <code>Y</code> и Enter (или просто Enter — <code>Y</code> стоит по умолчанию).</p>
+      </div>
+
+      <div class="cols">
+        <div class="col-main">
+          <h3 class="mono sub">BASE URL · API-КЛЮЧ · ПРОВЕРКА</h3>
+          <ul class="list">
+            <li><b>Base URL</b> — адрес вместе с <code>/v1</code> на конце. Если вписать <code>https://ru.cheapvibecode.ru</code> без <code>/v1</code>, запросы уйдут не туда и агент получит 404 на каждом шагу.</li>
+            <li><b>API-ключ</b> — ввод скрыт, вместо символов звёздочки. Помечен как <code>[optional]</code>: локальному endpoint не нужен, внешнему — обязателен.</li>
+            <li><b>Проверка</b> — Hermes сам дёргает <code>https://ru.cheapvibecode.ru/v1/models</code> и показывает 42 модели. Значит ключ рабочий, URL верный, провайдер отвечает по OpenAI-протоколу.</li>
+          </ul>
+
+          <h3 class="mono sub">РЕЖИМ СОВМЕСТИМОСТИ</h3>
+          <table class="tbl">
+            <thead><tr><th>№</th><th>Режим</th><th>Когда нужен</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><b>Auto-detect</b></td><td>Стандартный OpenAI-совместимый сервер: <code>/v1/chat/completions</code></td></tr>
+              <tr><td>2</td><td>Chat Completions</td><td>То же принудительно — если автоопределение ошиблось</td></tr>
+              <tr><td>3</td><td>Responses / Codex</td><td>Бэкенды с <code>/v1/responses</code> (стиль OpenAI Codex)</td></tr>
+              <tr><td>4</td><td>Anthropic Messages</td><td>Anthropic-совместимые endpoint через <code>/v1/messages</code></td></tr>
+            </tbody>
+          </table>
+          <p class="note">Рекомендация: выбирай <b>1 (Auto-detect)</b> — просто Enter. Он сам определяет протокол по URL, и для проверенного endpoint с 42 видимыми моделями этого достаточно.</p>
+
+          <h3 class="mono sub">ВЫБОР МОДЕЛИ И TOOL-CALLING</h3>
+          <p>Hermes показал все 42 модели и предлагает выбрать по номеру или ввести имя вручную. Из каталога берём <b>MiniMax M3.1 Flash</b> — пункт 40. Дальше <code>reasoning effort</code> — глубина размышления.</p>
+          <p>После настройки: <code>Provider configured</code> — провайдер встал. <code>minimax-m3.1-flash</code> внизу слева — активная модель, видна постоянно. <code>ctx --</code> — провайдер не отдаёт лимит контекста в карточке (не ошибка, но повод задать контекст вручную). Строка ввода «Plan a feature, then build it step by step» — рекламный пример промпта, не ваш запрос. Подсказка про <code>hermes acp</code> — агент умеет работать как ACP-сервер (VS Code, Zed, JetBrains).</p>
+          <p>Главная проверка: умеет ли модель реально вызывать инструменты. Введите:</p>
+          <div class="cmd" data-copy><code>Вызови tool execute_code и выведи результат: print(2+2)</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+        </div>
+
+        <aside class="col-side">
+          <div class="box">
+            <h3 class="mono box-title">ПРОВАЙДЕРЫ</h3>
+            <ul class="list tight">
+              <li><b>Nous Portal OAuth</b> — вход через браузер, API-ключ не нужен. Самый быстрый путь.</li>
+              <li><b>OpenAI / Anthropic / OpenRouter</b> — свой API-ключ.</li>
+              <li><b>Локальный endpoint</b> — vLLM или Ollama на том же сервере или на отдельной машине.</li>
+            </ul>
+          </div>
+          <div class="box box-mint">
+            <h3 class="mono box-title">ВЫБРАННЫЙ ПУТЬ</h3>
+            <p>Сторонний провайдер → <code>custom endpoint (enter URL manually)</code> → модель <b>minimax-m3.1-flash</b> → режим <b>Auto-detect</b>.</p>
+          </div>
+        </aside>
+      </div>
+    </article>
+
+    <!-- 04 TELEGRAM -->
+    <article class="panel" id="telegram" data-panel="telegram">
+      <div class="panel-head">
+        <h2 class="mono">04 / TELEGRAM-ШЛЮЗ</h2>
+        <p class="panel-intro">Агент на сервере полезен прежде всего тем, что пишет вам в чат и работает по расписанию. Для этого у Hermes есть фоновый шлюз — отдельный процесс, который держит подключение к Telegram.</p>
+      </div>
+      <div class="cols">
+        <div class="col-main">
+          <p>Токен бота и chat id мы уже прописали в <code>/root/setup-data/env.txt</code> на этапе подготовки, а копия файла лежит в <code>/home/hermes/env.txt</code> — чтобы пользователь <code>hermes</code> мог прочитать конфиг без root.</p>
+          <div class="cmd" data-copy><code>hermes gateway restart</code><button class="copy" type="button" aria-label="Скопировать команду"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY</span></button></div>
+          <p>Телеграм не подключен — озадачим нашего агента. Отдаём ему всё, что он хочет, и перекладываем работу по настройке на него. Бот работает — теперь можно писать запросы агенту прямо в боте.</p>
+          <div class="callout">
+            <span class="mono callout-tag">СЛЕДОМ</span>
+            <p>Тест 1 — обычный запрос в бота. Тест 2 — запрос с вызовом инструмента: агент должен вернуть результат, а не текст-обещание.</p>
+          </div>
+        </div>
+        <aside class="col-side">
+          <div class="box box-pink">
+            <h3 class="mono box-title">НУЖНА ПОМОЩЬ?</h3>
+            <p>Задай вопрос напрямую — отвечаем в Telegram.</p>
+            <a class="btn btn-pink" href="https://t.me/sorrybutikillyou" target="_blank" rel="noopener">
+              <img src="assets/tg.png" alt=""> ЗАДАТЬ ВОПРОС
+            </a>
+          </div>
+        </aside>
+      </div>
+    </article>
+
+    <!-- ВСЕ КОМАНДЫ -->
+    <article class="panel" id="all" data-panel="all">
+      <div class="panel-head">
+        <h2 class="mono">ВСЕ КОМАНДЫ СПИСКОМ</h2>
+        <p class="panel-intro">Один блок — копируется целиком. Удобно вставить в терминал построчно.</p>
+      </div>
+      <div class="cmd cmd-big" data-copy><code>wget -O /tmp/prepare-hermes.sh https://amorev.ru/misc/hermes/prepare-hermes-1.sh && sudo bash /tmp/prepare-hermes.sh
+sudo nano /root/setup-data/env.txt
+wget -O /tmp/prepare-hermes2.sh https://amorev.ru/misc/hermes/prepare-hermes-2.sh && sudo bash /tmp/prepare-hermes2.sh
+ssh hermes@<ВАШ_IP_СЕРВЕРА> -p 2091
+whoami
+sudo -v
+swapon --show
+sudo ufw status verbose
+sudo fail2ban-client status sshd
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+hermes gateway restart</code><button class="copy" type="button" aria-label="Скопировать все команды"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="mono">COPY ALL</span></button></div>
+    </article>
+
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="mono">СКОПИРОВАНО</span></div>
+
+<script src="assets/copy.js"></script>
+<script src="assets/ui.js"></script>
+</body>
+</html>
